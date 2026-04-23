@@ -87,6 +87,14 @@ Route::prefix('api')->group(function () {
         ]);
     });
 
+    Route::get('/routes-check', function() {
+    $routes = [];
+    foreach (Route::getRoutes() as $route) {
+        $routes[] = $route->uri();
+    }
+    return response()->json($routes);
+});
+
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
