@@ -19,6 +19,9 @@ use App\Http\Controllers\SupportController;
 use App\Models\SupportMessage;
 use App\Models\User;
 
+Route::group(['prefix' => 'v1'], function () {
+    // API version 1 routes
+});
 Route::get('/user/status', function(Request $request) {
     $user = User::where('email', $request->email)->first();
 
@@ -199,3 +202,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/roles/{role}/sync-permissions', [RolePermissionController::class, 'syncRolePermissions']);
     });
 });
+
