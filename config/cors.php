@@ -19,7 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-'allowed_origins' => ['*'],
+'allowed_origins' => [
+    'https://babymonster-front.netlify.app',  // Your current Netlify URL
+    'http://localhost:3000',                  // For local development
+],
 
     'allowed_origins_patterns' => [],
 

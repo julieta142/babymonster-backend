@@ -19,6 +19,9 @@ use App\Http\Controllers\SupportController;
 use App\Models\SupportMessage;
 use App\Models\User;
 
+Route::get('/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF cookie set']);
+})->middleware('web');
 
 Route::get('/user/status', function(Request $request) {
     $user = User::where('email', $request->email)->first();
@@ -41,9 +44,6 @@ Route::get('/user/status', function(Request $request) {
 Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
-Route::get('/csrf-cookie', function () {
-    return response()->json(['message' => 'CSRF cookie set']);
-})->middleware('web');
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/register', [RegisteredUserController::class, 'store']);
