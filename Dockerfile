@@ -8,13 +8,15 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    sqlite3 \
+    libsqlite3-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -28,35 +30,47 @@ COPY . .
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-RUN php artisan migrate --force
-
-# Set correct permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
-
+# CRITICAL: Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Configure Apache to use Laravel's public directory correctly
-RUN sed -i '/<Directory \/var\/www\/html>/a \ \ \ \ Options Indexes FollowSymLinks\n    AllowOverride All\n    Require all granted' /etc/apache2/sites-available/000-default.conf
+# CRITICAL: Change DocumentRoot to Laravel's public folder
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-# Copy a custom .htaccess to ensure proper routing
+# CRITICAL: Allow .htaccess overrides and set proper directory permissions
+RUN echo '<Directory /var/www/html/public/>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/sites-available/000-default.conf
+
+# Create .htaccess file in public directory (fallback)
 RUN echo '<IfModule mod_rewrite.c>\n\
-    RewriteEngine On\n\
+    <IfModule mod_negotiation.c>\n\
+        Options -MultiViews -Indexes\n\
+    </IfModule>\n\n\
+    RewriteEngine On\n\n\
+    # Handle Authorization Header\n\
+    RewriteCond %{HTTP:Authorization} .\n\
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]\n\n\
+    # Redirect Trailing Slashes If Not A Folder...\n\
+    RewriteCond %{REQUEST_FILENAME} !-d\n\
+    RewriteCond %{REQUEST_URI} (.+)/$\n\
+    RewriteRule ^ %1 [L,R=301]\n\n\
+    # Send Requests To Front Controller...\n\
     RewriteCond %{REQUEST_FILENAME} !-d\n\
     RewriteCond %{REQUEST_FILENAME} !-f\n\
     RewriteRule ^ index.php [L]\n\
 </IfModule>' > /var/www/html/public/.htaccess
 
-# Configure Apache to serve Laravel
-RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
+
+# Clear Laravel caches
+RUN php artisan route:clear
+RUN php artisan config:clear
+RUN php artisan cache:clear
 
 EXPOSE 80
 
