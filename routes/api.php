@@ -18,23 +18,8 @@ use App\Http\Controllers\ShowController;
 use App\Http\Controllers\SupportController;
 use App\Models\SupportMessage;
 use App\Models\User;
-use Illuminate\Support\Facades\Artisan;
 
-Route::get('/run-migrations', function() {
-    try {
-        Artisan::call('migrate', ['--force' => true]);
-        return response()->json([
-            'success' => true,
-            'message' => 'Migrations completed successfully',
-            'output' => Artisan::output()
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
-});
+
 Route::get('/user/status', function(Request $request) {
     $user = User::where('email', $request->email)->first();
 
