@@ -201,3 +201,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 });
 
+Route::post('/test-login', function(Request $request) {
+    return response()->json([
+        'success' => true,
+        'message' => 'Login endpoint is working',
+        'received' => $request->only('email', 'password')
+    ]);
+});
