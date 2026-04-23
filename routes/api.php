@@ -19,6 +19,7 @@ use App\Http\Controllers\SupportController;
 use App\Models\SupportMessage;
 use App\Models\User;
 
+Route::prefix('api')->group(function () {
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF cookie set']);
 })->middleware('web');
@@ -208,3 +209,6 @@ Route::post('/test-login', function(Request $request) {
         'received' => $request->only('email', 'password')
     ]);
 });
+
+});
+

@@ -35,8 +35,18 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Enable Apache mod_rewrite
 RUN a2enmod rewrite
+
+# Configure Apache to use Laravel's public directory correctly
+RUN sed -i '/<Directory \/var\/www\/html>/a \ \ \ \ Options Indexes FollowSymLinks\n    AllowOverride All\n    Require all granted' /etc/apache2/sites-available/000-default.conf
+
+# Copy a custom .htaccess to ensure proper routing
+RUN echo '<IfModule mod_rewrite.c>\n\
+    RewriteEngine On\n\
+    RewriteCond %{REQUEST_FILENAME} !-d\n\
+    RewriteCond %{REQUEST_FILENAME} !-f\n\
+    RewriteRule ^ index.php [L]\n\
+</IfModule>' > /var/www/html/public/.htaccess
 
 # Configure Apache to serve Laravel
 RUN echo '<VirtualHost *:80>\n\
