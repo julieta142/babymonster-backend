@@ -28,10 +28,12 @@ COPY . .
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions
+RUN php artisan migrate --force
+
+# Set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
